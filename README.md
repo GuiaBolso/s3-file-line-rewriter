@@ -43,8 +43,8 @@ val rewriter = S3FileLineRewriter(myAmazonS3Client)
 rewriter.rewriteFile(
     bucket = "bucket",
     key = "key"
-) { line: String -> 
-    line.replace("StringIWantToRedact", "*****") 
+) { lines: Sequence<String> -> 
+    lines.map { it.replace("StringIWantToRedact", "*****") } 
 }
 ```
 
@@ -53,8 +53,8 @@ rewriter.rewriteFile(
 rewriter.rewriteAll(
     bucket = "bucket",
     prefix = "MyDirectory/SubDirectory"
-) { line: String -> 
-    line.replace("StringIWantToRedact", "*****") 
+) { lines: Sequence<String> -> 
+    lines.map { it.replace("StringIWantToRedact", "*****") } 
 }
 ```
 

@@ -28,7 +28,7 @@ import com.amazonaws.services.s3.model.S3Object
 public class S3FileLineRewriter(
     private val s3Client: AmazonS3
 ) {
-    public fun rewriteAll(bucket: String, prefix: String, transform: (String) -> String) {
+    public fun rewriteAll(bucket: String, prefix: String, transform: (Sequence<String>) -> Sequence<String>) {
         validateRequirementsAll(bucket, prefix)
 
         listFiles(bucket, prefix).forEach { rewriteFile(bucket, it, transform) }
@@ -48,16 +48,16 @@ public class S3FileLineRewriter(
         return if (!result.isTruncated) keys else keys + listFiles(bucket, prefix, result.nextContinuationToken)
     }
 
-    public fun rewriteFile(bucket: String, key: String, transform: (String) -> String) {
+    public fun rewriteFile(bucket: String, key: String, transform: (Sequence<String>) -> Sequence<String>) {
         validateRequrimentsIndividual(bucket, key)
 
         using(bucket, key) { lines, s3Object ->
-            val newLines = lines.map(transform).withNoEmptyLines().withSeparatingNewlines()
+            val newLines = transform(lines).withNoEmptyLines().withSeparatingNewlines()
 
             S3FileUploader(s3Object, s3Client).upload(newLines)
         }
     }
-
+    
     private fun validateRequrimentsIndividual(bucket: String, key: String) {
         require(bucket.isNotEmpty()) { "Bucket must be non-empty string, but was." }
         require(key.isNotEmpty()) { "Key must be non-empty string, but was." }
