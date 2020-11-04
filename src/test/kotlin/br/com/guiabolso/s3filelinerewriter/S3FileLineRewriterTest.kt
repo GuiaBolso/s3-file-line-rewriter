@@ -39,8 +39,8 @@ class S3FileLineRewriterTest : FunSpec() {
         test("Rewriting a single line with intended modification") {
             createFile("abc\nXXX\n123")
 
-            rewriteLines {
-                it.replace("XXX", "YYY")
+            rewriteLines { seq -> 
+                seq.map { it.replace("XXX", "YYY") }
             }
 
             getFile().contentString shouldBe "abc\nYYY\n123"
@@ -49,8 +49,8 @@ class S3FileLineRewriterTest : FunSpec() {
         test("Rewriting multiple lines with intended modification") {
             createFile("abc\nXXX\nXXX\n123")
             
-            rewriteLines {
-                it.replace("XXX", "YYY")
+            rewriteLines { seq ->
+                seq.map { it.replace("XXX", "YYY") }
             }
             
             getFile().contentString shouldBe "abc\nYYY\nYYY\n123"
@@ -75,7 +75,9 @@ class S3FileLineRewriterTest : FunSpec() {
         test("Rewriting should remove a line if it's empty") {
             createFile("A\nB\nC")
 
-            rewriteLines { it.replace("B", "") }
+            rewriteLines { seq ->
+                seq.map { it.replace("B", "") } 
+            }
             
             getFile().contentString shouldBe "A\nC"
         }
@@ -83,7 +85,9 @@ class S3FileLineRewriterTest : FunSpec() {
         test("Should run (and do nothing) in an empty file") {
             createFile("")
             
-            rewriteLines { it.replace("Foo", "BAR") }
+            rewriteLines { seq -> 
+                seq.map { it.replace("Foo", "BAR") } 
+            }
             
             getFile().contentString shouldBe ""
         }
@@ -95,8 +99,8 @@ class S3FileLineRewriterTest : FunSpec() {
                 createFile("A\nB\nC", key = "$it", directory = "dir/subdir/otherdir/")
             }
             
-            rewriteAll("dir/subdir/") {
-                it.replace("B", "")
+            rewriteAll("dir/subdir/") { seq ->
+                seq.map { it.replace("B", "") }
             }
             
             repeat(501) { 
@@ -124,14 +128,25 @@ class S3FileLineRewriterTest : FunSpec() {
                 rewriter.rewriteFile("nonEmpty", "") { it } 
             }.shouldHaveMessage("Key must be non-empty string, but was.")
         }
+
+        test("Should allow rewriting line sequences") {
+            createFile("abc\nXXX\nXXX\n123")
+
+            rewriteLines { seq: Sequence<String> ->
+                seq.map { it.replace("XXX", "YYY") }
+            }
+
+            getFile().contentString shouldBe "abc\nYYY\nYYY\n123"
+        }
     }
     
     private val S3Object.contentString get() = objectContent.readBytes().decodeToString()
 
-    private fun rewriteLines(change: (String) -> String) =
+    @JvmName("rewriteLinesSequence") 
+    private fun rewriteLines(change: (Sequence<String>) -> Sequence<String>) =
         S3FileLineRewriter(s3Client).rewriteFile("bucket", "key", change)
     
-    private fun rewriteAll(directory: String, change: (String) -> String) =
+    private fun rewriteAll(directory: String, change: (Sequence<String>) -> Sequence<String>) =
         S3FileLineRewriter(s3Client).rewriteAll("bucket", directory, change)
     
     private fun createFile(

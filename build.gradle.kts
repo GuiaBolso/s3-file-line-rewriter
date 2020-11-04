@@ -1,8 +1,8 @@
 import com.novoda.gradle.release.PublishExtension
+import info.solidsoft.gradle.pitest.PitestPluginExtension
 import io.gitlab.arturbosch.detekt.detekt
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import info.solidsoft.gradle.pitest.PitestPluginExtension
 
 buildscript {
     repositories {
@@ -27,7 +27,7 @@ plugins {
 apply(plugin = "com.novoda.bintray-release")
 
 group = "br.com.guiabolso"
-version = "0.1.0"
+version = System.getenv("RELEASE_VERSION") ?: "local"
 
 repositories {
     mavenCentral()
