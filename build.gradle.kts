@@ -1,6 +1,5 @@
 import com.novoda.gradle.release.PublishExtension
 import info.solidsoft.gradle.pitest.PitestPluginExtension
-import io.gitlab.arturbosch.detekt.detekt
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -17,10 +16,10 @@ buildscript {
 
 
 plugins {
-    kotlin("jvm") version "1.3.70"
+    kotlin("jvm") version "1.4.10"
     `maven-publish`
     id("org.jetbrains.dokka") version "0.9.17"
-    id("io.gitlab.arturbosch.detekt").version("1.1.1")
+    id("io.gitlab.arturbosch.detekt").version("1.14.2")
     id("info.solidsoft.pitest") version "1.4.5"
 }
 
@@ -36,7 +35,7 @@ repositories {
 
 dependencies {
     // Kotlin
-    implementation(kotlin("stdlib-jdk8"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1")
 
     // S3
     api("com.amazonaws:aws-java-sdk-s3:1.11.488")
@@ -46,9 +45,9 @@ dependencies {
     implementation("com.github.alexmojaki:s3-stream-upload:2.1.0")
 
     // Kotest
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:4.0.1")
-    testImplementation("io.kotest:kotest-assertions-core-jvm:4.0.1")
-    testImplementation("io.kotest:kotest-plugins-pitest-jvm:4.0.1")
+    testImplementation("io.kotest:kotest-runner-junit5-jvm:4.3.1")
+    testImplementation("io.kotest:kotest-assertions-core-jvm:4.3.1")
+    testImplementation("io.kotest:kotest-plugins-pitest-jvm:4.3.1")
 }
 
 tasks.withType<Test> {
@@ -74,7 +73,6 @@ val javadocJar by tasks.registering(Jar::class) {
 }
 
 detekt {
-    toolVersion = "1.1.1"
     input = files("src/main/kotlin", "src/test/kotlin")
 }
 
@@ -126,8 +124,8 @@ configure<PitestPluginExtension> {
     testPlugin.set("Kotest")
     targetClasses.set(listOf("br.com.guiabolso.*"))
     targetTests.set(listOf("br.com.guiabolso.*"))
-    mutationThreshold.set(100)
-    avoidCallsTo.set(listOf("kotlin.jvm.internal", "kotlin.io.CloseableKt", "java.io.Closeable.close")
+    mutationThreshold.set(80)
+    avoidCallsTo.set(listOf("kotlin.jvm.internal", "kotlin.io.CloseableKt", "java.io.Closeable.close", "kotlin.ResultKt")
     )
 }
 
