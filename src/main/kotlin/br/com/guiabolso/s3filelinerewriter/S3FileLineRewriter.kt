@@ -23,15 +23,28 @@ import br.com.guiabolso.s3filelinerewriter.internal.withSeparatingNewlines
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.ListObjectsV2Request
 import com.amazonaws.services.s3.model.S3Object
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 
 public class S3FileLineRewriter(
-    private val s3Client: AmazonS3
+    private val s3Client: AmazonS3,
+    private val executor: ExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 ) {
+    private val dispatcher = executor.asCoroutineDispatcher()
+    
     public fun rewriteAll(bucket: String, prefix: String, transform: (Sequence<String>) -> Sequence<String>) {
-        validateRequirementsAll(bucket, prefix)
+        runBlocking {
+            validateRequirementsAll(bucket, prefix)
 
-        listFiles(bucket, prefix).forEach { rewriteFile(bucket, it, transform) }
+            listFiles(bucket, prefix).map {
+                async(dispatcher) { rewriteFile(bucket, it, transform) }
+            }.awaitAll()
+        }
     }
 
     private fun validateRequirementsAll(bucket: String, prefix: String) {
@@ -40,7 +53,7 @@ public class S3FileLineRewriter(
     }
 
     private fun listFiles(bucket: String, prefix: String, token: String? = null): List<String> {
-        val request = listObjecstV2Request(bucket, prefix, token)
+        val request = listObjectsV2Request(bucket, prefix, token)
 
         val result = s3Client.listObjectsV2(request)
         val keys = result.objectSummaries.map { it.key }
@@ -49,7 +62,7 @@ public class S3FileLineRewriter(
     }
 
     public fun rewriteFile(bucket: String, key: String, transform: (Sequence<String>) -> Sequence<String>) {
-        validateRequrimentsIndividual(bucket, key)
+        validateRequirementsIndividual(bucket, key)
 
         using(bucket, key) { lines, s3Object ->
             val newLines = transform(lines).withNoEmptyLines().withSeparatingNewlines()
@@ -58,7 +71,7 @@ public class S3FileLineRewriter(
         }
     }
     
-    private fun validateRequrimentsIndividual(bucket: String, key: String) {
+    private fun validateRequirementsIndividual(bucket: String, key: String) {
         require(bucket.isNotEmpty()) { "Bucket must be non-empty string, but was." }
         require(key.isNotEmpty()) { "Key must be non-empty string, but was." }
     }
@@ -72,6 +85,6 @@ public class S3FileLineRewriter(
         if (REMOVE_EMPTY_LINES) filterNot { it.isBlank() } else this
 }
 
-private fun listObjecstV2Request(bucket: String, prefix: String, token: String?): ListObjectsV2Request =
+private fun listObjectsV2Request(bucket: String, prefix: String, token: String?): ListObjectsV2Request =
     ListObjectsV2Request().withBucketName(bucket).withPrefix(prefix).withContinuationToken(token)
 

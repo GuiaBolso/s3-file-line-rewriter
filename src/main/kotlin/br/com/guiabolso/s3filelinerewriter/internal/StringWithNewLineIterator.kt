@@ -19,6 +19,7 @@ package br.com.guiabolso.s3filelinerewriter.internal
 
 internal fun Sequence<String>.withSeparatingNewlines() = StringWithNewLineIterator(this).asSequence()
 
+@Suppress("IteratorNotThrowingNoSuchElementException")
 private class StringWithNewLineIterator(
     sequence: Sequence<String>
 ) : Iterator<String> {
