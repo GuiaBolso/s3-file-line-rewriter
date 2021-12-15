@@ -21,7 +21,8 @@ group = "br.com.guiabolso"
 version = System.getenv("RELEASE_VERSION") ?: "local"
 
 repositories {
-    mavenCentral()    
+    mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -110,6 +111,18 @@ publishing {
             }
         }
     }
+}
+
+signing {
+    val signingKey: String? by project
+    val signingPassword: String? by project
+
+    useGpgCmd()
+    if (signingKey != null && signingPassword != null) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+    }
+
+    sign((extensions.getByName("publishing") as PublishingExtension).publications)
 }
 
 configure<PitestPluginExtension> {
