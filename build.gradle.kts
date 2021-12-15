@@ -11,6 +11,7 @@ buildscript {
 plugins {
     kotlin("jvm") version "1.4.10"
     `maven-publish`
+    signing
     id("org.jetbrains.dokka") version "0.9.17"
     id("io.gitlab.arturbosch.detekt").version("1.14.2")
     id("info.solidsoft.pitest") version "1.4.5"
@@ -20,8 +21,7 @@ group = "br.com.guiabolso"
 version = System.getenv("RELEASE_VERSION") ?: "local"
 
 repositories {
-    mavenCentral()
-    jcenter()
+    mavenCentral()    
 }
 
 dependencies {
