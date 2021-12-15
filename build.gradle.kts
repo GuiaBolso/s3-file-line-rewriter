@@ -11,6 +11,7 @@ buildscript {
 plugins {
     kotlin("jvm") version "1.4.10"
     `maven-publish`
+    signing
     id("org.jetbrains.dokka") version "0.9.17"
     id("io.gitlab.arturbosch.detekt").version("1.14.2")
     id("info.solidsoft.pitest") version "1.4.5"
@@ -110,6 +111,18 @@ publishing {
             }
         }
     }
+}
+
+signing {
+    val signingKey: String? by project
+    val signingPassword: String? by project
+
+    useGpgCmd()
+    if (signingKey != null && signingPassword != null) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+    }
+
+    sign((extensions.getByName("publishing") as PublishingExtension).publications)
 }
 
 configure<PitestPluginExtension> {
