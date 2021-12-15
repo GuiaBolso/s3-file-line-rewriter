@@ -8,12 +8,7 @@ buildscript {
         mavenCentral()
         jcenter()
     }
-
-    dependencies {
-        classpath("com.novoda:bintray-release:0.9.1")
-    }
 }
-
 
 plugins {
     kotlin("jvm") version "1.4.10"
@@ -22,8 +17,6 @@ plugins {
     id("io.gitlab.arturbosch.detekt").version("1.14.2")
     id("info.solidsoft.pitest") version "1.4.5"
 }
-
-apply(plugin = "com.novoda.bintray-release")
 
 group = "br.com.guiabolso"
 version = System.getenv("RELEASE_VERSION") ?: "local"
@@ -63,13 +56,12 @@ val sourcesJar by tasks.registering(Jar::class) {
     from(sourceSets.getByName("main").allSource)
 }
 
-val javadocJar by tasks.registering(Jar::class) {
-    val javadoc = tasks["dokka"] as DokkaTask
-    javadoc.outputFormat = "javadoc"
-    javadoc.outputDirectory = "$buildDir/javadoc"
-    dependsOn(javadoc)
-    classifier = "javadoc"
-    from(javadoc.outputDirectory)
+val javadoc = tasks.named("javadoc")
+val javadocsJar by tasks.creating(Jar::class) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    description = "Assembles java doc to jar"
+    archiveClassifier.set("javadoc")
+    from(javadoc)
 }
 
 detekt {
@@ -77,8 +69,17 @@ detekt {
 }
 
 publishing {
+    repositories {
+        maven {
+            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                username = System.getenv("OSSRH_USERNAME")
+                password = System.getenv("OSSRH_PASSWORD")
+            }
+        }
+    }
+    
     publications {
-
         register("maven", MavenPublication::class) {
             from(components["java"])
             artifact(sourcesJar.get())
@@ -88,7 +89,6 @@ publishing {
                 name.set("S3-file-line-rewriter")
                 description.set("S3-file-line-rewriter")
                 url.set("https://github.com/GuiaBolso/s3-file-line-rewriter")
-
 
                 scm {
                     connection.set("scm:git:https://github.com/GuiaBolso/s3-file-line-rewriter/")
@@ -100,6 +100,13 @@ publishing {
                     license {
                         name.set("The Apache 2.0 License")
                         url.set("https://opensource.org/licenses/Apache-2.0")
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id.set("Guiabolso")
+                        name.set("Guiabolso")
                     }
                 }
             }
