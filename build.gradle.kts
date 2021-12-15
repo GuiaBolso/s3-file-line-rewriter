@@ -1,6 +1,4 @@
-import com.novoda.gradle.release.PublishExtension
 import info.solidsoft.gradle.pitest.PitestPluginExtension
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript {
@@ -83,7 +81,7 @@ publishing {
         register("maven", MavenPublication::class) {
             from(components["java"])
             artifact(sourcesJar.get())
-            artifact(javadocJar.get())
+            artifact(javadocsJar)
 
             pom {
                 name.set("S3-file-line-rewriter")
@@ -112,19 +110,6 @@ publishing {
             }
         }
     }
-}
-
-configure<PublishExtension> {
-    artifactId = "s3-file-line-rewriter"
-    autoPublish = true
-    desc = "S3 File Line Rewriter"
-    groupId = "br.com.guiabolso"
-    userOrg = "gb-opensource"
-    setLicences("APACHE-2.0")
-    publishVersion = version.toString()
-    uploadName = "s3-file-line-rewriter"
-    website = "https://github.com/GuiaBolso/s3-file-line-rewriter"
-    setPublications("maven")
 }
 
 configure<PitestPluginExtension> {
